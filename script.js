@@ -5,10 +5,14 @@ async function newTodo() {
         return;
     }
 
-    const item = await addTODOtoDB(task);
-    todos.push(item);
-    render();
-    updateCounter();
+    try {
+        const item = await addTODOtoDB(task);
+        todos.push(item);
+        render();
+        updateCounter();
+    } catch (e) {
+        alert(`Failed to add task: ${e}`);
+    }
 }
 
 function renderTodo(todo) {
@@ -38,7 +42,11 @@ function removeTodo(id, event) {
     todos = todos.filter(todo => todo.id !== id);
     render();
     updateCounter();
-    deleteTODOinDB(id);
+
+    deleteTODOinDB(id + "").catch(() => {
+        alert(`Failed to delete task!`);
+        location.reload();
+    });
 }
 
 function checkTodo(id, event) {
@@ -55,15 +63,19 @@ function checkTodo(id, event) {
     checkbox.checked = !checkbox.checked;
     label.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
     updateCounter();
-    updateTODOinDB(id, { checked: checkbox.checked });
+    updateTODOinDB(id, { checked: checkbox.checked }).catch(() => {
+        alert(`Failed to toggle task!`);
+    });
 }
 
 let todos = [];
 window.addEventListener("DOMContentLoaded", async () => {
-    document.querySelector('#new-todo').addEventListener("click", newTodo);
-
     try {
         await loadTODOsFromDB();
+        let newTodoBtn = document.querySelector('#new-todo');
+        newTodoBtn.addEventListener("click", newTodo);
+        newTodoBtn.removeAttribute("disabled");
+
         render();
         updateCounter();
     } catch (e) {
